@@ -240,6 +240,7 @@ class Yolov8Node(Node):
 
             # publish detections
             detections_msg.header = msg.header
+            detections_msg.raw_img = msg
             self._pub.publish(detections_msg)
 
 
