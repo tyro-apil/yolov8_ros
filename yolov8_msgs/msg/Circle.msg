@@ -1,11 +1,13 @@
 
 # Circle params
-float32 center_x
-float32 center_y
+yolov8_msgs/Pose2D center
 float32 radius
 
 # Tracker id
-string id
+string tracker_id 'a'
 
 # Circle type
-int32 class_id
+int32 class_id 0
+
+# Detection index
+int8 idx 0

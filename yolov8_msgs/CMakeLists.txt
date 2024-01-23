@@ -23,6 +23,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/DetectionArray.msg"
   "msg/Circle.msg"
   "msg/CircleArray.msg"
+  "msg/CoordinateArray.msg"
   DEPENDENCIES std_msgs geometry_msgs sensor_msgs
 )
 
