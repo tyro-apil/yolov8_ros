@@ -4,10 +4,9 @@ yolov8_msgs/Pose2D center
 float32 radius
 
 # Tracker id
-string tracker_id 'a'
+int32 tracker_id 
 
 # Circle type
-int32 class_id 0
-
-# Detection index
-int8 idx 0
+int32 class_id 32
+string class_name ball
+float64 score 0
