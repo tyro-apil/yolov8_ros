@@ -21,9 +21,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/KeyPoint3DArray.msg"
   "msg/Detection.msg"
   "msg/DetectionArray.msg"
-  "msg/Circle.msg"
-  "msg/CircleArray.msg"
-  "msg/CoordinateArray.msg"
+  "msg/Ball.msg"
+  "msg/BallArray.msg"
   DEPENDENCIES std_msgs geometry_msgs sensor_msgs
 )
 
