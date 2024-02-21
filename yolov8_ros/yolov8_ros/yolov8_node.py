@@ -12,7 +12,6 @@
 
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-SPORTS_BALL=32
 
 from typing import List, Dict
 
@@ -48,7 +47,7 @@ class Yolov8Node(Node):
         super().__init__("yolov8_node")
 
         # params
-        self.declare_parameter("model", "yolov8m.pt")
+        self.declare_parameter("model", "new_model.pt")
         model = self.get_parameter(
             "model").get_parameter_value().string_value
 
@@ -107,13 +106,12 @@ class Yolov8Node(Node):
 
         box_data: Boxes
         for box_data in results.boxes:
-            if box_data.cls == SPORTS_BALL:
-                hypothesis = {
-                    "class_id": int(box_data.cls),
-                    "class_name": self.yolo.names[int(box_data.cls)],
-                    "score": float(box_data.conf)
-                }
-                hypothesis_list.append(hypothesis)
+            hypothesis = {
+                "class_id": int(box_data.cls),
+                "class_name": self.yolo.names[int(box_data.cls)],
+                "score": float(box_data.conf)
+            }
+            hypothesis_list.append(hypothesis)
 
         return hypothesis_list
 
@@ -122,19 +120,18 @@ class Yolov8Node(Node):
         boxes_list = []
 
         box_data: Boxes
-        for (cls, box_data) in zip(results.boxes.cls, results.boxes):
-            if cls == SPORTS_BALL:
-                msg = BoundingBox2D()
+        for box_data in results.boxes:
+            msg = BoundingBox2D()
 
-                # get boxes values
-                box = box_data.xywh[0]
-                msg.center.position.x = float(box[0])
-                msg.center.position.y = float(box[1])
-                msg.size.x = float(box[2])
-                msg.size.y = float(box[3])
+            # get boxes values
+            box = box_data.xywh[0]
+            msg.center.position.x = float(box[0])
+            msg.center.position.y = float(box[1])
+            msg.size.x = float(box[2])
+            msg.size.y = float(box[3])
 
-                # append msg
-                boxes_list.append(msg)
+            # append msg
+            boxes_list.append(msg)
 
         return boxes_list
 
@@ -240,7 +237,6 @@ class Yolov8Node(Node):
 
             # publish detections
             detections_msg.header = msg.header
-            detections_msg.raw_img = msg
             self._pub.publish(detections_msg)
 
 
