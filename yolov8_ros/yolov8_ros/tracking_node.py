@@ -146,7 +146,6 @@ class TrackingNode(Node):
                     # append msg
                     tracked_detections_msg.detections.append(tracked_detection)
 
-        tracked_detections_msg.raw_img=img_msg
         # publish detections
         self._pub.publish(tracked_detections_msg)
 
