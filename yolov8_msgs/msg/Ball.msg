@@ -1,6 +1,7 @@
 
 # Circle params
-yolov8_msgs/Pose2D center  
+yolov8_msgs/Pose2D center
+float32 depth 0.00  
 float32 radius
 
 # Tracker id
