@@ -118,7 +118,7 @@ class TrackingNode(LifecycleNode):
   def detections_cb(self, img_msg: ImagePose, detections_msg: DetectionArray) -> None:
     tracked_detections_msg = DetectionArray()
     tracked_detections_msg.pose_capture = img_msg.pose_capture
-    tracked_detections_msg.header = img_msg.image.header
+    tracked_detections_msg.header = img_msg.header
 
     # convert image
     cv_image = self.cv_bridge.imgmsg_to_cv2(img_msg.image)
@@ -140,13 +140,13 @@ class TrackingNode(LifecycleNode):
 
     # tracking
     if len(detection_list) > 0:
-      det = Boxes(np.array(detection_list), (img_msg.height, img_msg.width))
+      det = Boxes(np.array(detection_list), (img_msg.image.height, img_msg.image.width))
 
       tracks = self.tracker.update(det, cv_image)
 
       if len(tracks) > 0:
         for t in tracks:
-          tracked_box = Boxes(t[:-1], (img_msg.height, img_msg.width))
+          tracked_box = Boxes(t[:-1], (img_msg.image.height, img_msg.image.width))
 
           tracked_detection: Detection = detections_msg.detections[int(t[-1])]
 

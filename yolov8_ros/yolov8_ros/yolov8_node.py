@@ -255,7 +255,7 @@ class Yolov8Node(LifecycleNode):
         detections_msg.detections.append(aux_msg)
 
       # publish detections
-      detections_msg.header = msg.image.header
+      detections_msg.header = msg.header
       self._pub.publish(detections_msg)
 
       del results
