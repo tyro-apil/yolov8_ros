@@ -305,7 +305,7 @@ class DebugNode(LifecycleNode):
 
     # publish dbg image
     self._dbg_pub.publish(
-      self.cv_bridge.cv2_to_imgmsg(cv_image, encoding=img_msg.encoding)
+      self.cv_bridge.cv2_to_imgmsg(cv_image, encoding=img_msg.image.encoding)
     )
     self._bb_markers_pub.publish(bb_marker_array)
     self._kp_markers_pub.publish(kp_marker_array)
