@@ -13,11 +13,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from launch_ros.actions import Node
 
 from launch import LaunchDescription
-from launch_ros.actions import Node
-from launch.substitutions import LaunchConfiguration
-from launch.actions import DeclareLaunchArgument
+from launch.actions import (DeclareLaunchArgument, EmitEvent, ExecuteProcess,
+                            LogInfo, RegisterEventHandler, TimerAction)
+from launch.conditions import IfCondition
+from launch.event_handlers import (OnExecutionComplete, OnProcessExit,
+                                OnProcessIO, OnProcessStart, OnShutdown)
+from launch.events import Shutdown
+from launch.substitutions import (EnvironmentVariable, FindExecutable,
+                                LaunchConfiguration, LocalSubstitution,
+                                PythonExpression)
 
 
 def generate_launch_description():
@@ -74,6 +81,27 @@ def generate_launch_description():
         default_value="yolo",
         description="Namespace for the nodes")
 
+
+    make_unconfigured= ExecuteProcess(
+        cmd=[[
+
+            FindExecutable(name='ros2'),
+            ' lifecycle set ',
+            '/silo/yolo/yolov8_node ',
+            'deactivate', 
+            '  && notify-send "From Launch lol"' 
+        ]],
+        shell=True
+    )
+
+
+    sleeper = ExecuteProcess(
+        cmd=[[
+            'sleep 3',
+        ]],
+        shell=True
+    )
+
     #
     # NODES
     #
@@ -126,6 +154,22 @@ def generate_launch_description():
     ld.add_action(input_image_topic_cmd)
     ld.add_action(image_reliability_cmd)
     ld.add_action(namespace_cmd)
+
+    ld.add_action(RegisterEventHandler(
+            OnProcessStart(
+                target_action=detector_node_cmd,
+                on_start=[
+                    sleeper,
+                    ]
+                )))
+
+    ld.add_action(RegisterEventHandler(
+            OnProcessExit(
+                target_action=sleeper,
+                on_exit=[
+                    make_unconfigured,
+                    ]
+                )))
 
     ld.add_action(detector_node_cmd)
     ld.add_action(tracking_node_cmd)
