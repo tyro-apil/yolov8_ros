@@ -13,166 +13,180 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from launch_ros.actions import Node
-
 from launch import LaunchDescription
-from launch.actions import (DeclareLaunchArgument, EmitEvent, ExecuteProcess,
-                            LogInfo, RegisterEventHandler, TimerAction)
+from launch.actions import (
+  DeclareLaunchArgument,
+  EmitEvent,
+  ExecuteProcess,
+  LogInfo,
+  RegisterEventHandler,
+  TimerAction,
+)
 from launch.conditions import IfCondition
-from launch.event_handlers import (OnExecutionComplete, OnProcessExit,
-                                OnProcessIO, OnProcessStart, OnShutdown)
+from launch.event_handlers import (
+  OnExecutionComplete,
+  OnProcessExit,
+  OnProcessIO,
+  OnProcessStart,
+  OnShutdown,
+)
 from launch.events import Shutdown
-from launch.substitutions import (EnvironmentVariable, FindExecutable,
-                                LaunchConfiguration, LocalSubstitution,
-                                PythonExpression)
+from launch.substitutions import (
+  EnvironmentVariable,
+  FindExecutable,
+  LaunchConfiguration,
+  LocalSubstitution,
+  PythonExpression,
+)
+from launch_ros.actions import Node
 
 
 def generate_launch_description():
+  #
+  # ARGS
+  #
+  model = LaunchConfiguration("model")
+  model_cmd = DeclareLaunchArgument(
+    "model", default_value="yolov8m.pt", description="Model name or path"
+  )
 
-    #
-    # ARGS
-    #
-    model = LaunchConfiguration("model")
-    model_cmd = DeclareLaunchArgument(
-        "model",
-        default_value="yolov8m.pt",
-        description="Model name or path")
+  tracker = LaunchConfiguration("tracker")
+  tracker_cmd = DeclareLaunchArgument(
+    "tracker", default_value="bytetrack.yaml", description="Tracker name or path"
+  )
 
-    tracker = LaunchConfiguration("tracker")
-    tracker_cmd = DeclareLaunchArgument(
-        "tracker",
-        default_value="bytetrack.yaml",
-        description="Tracker name or path")
+  device = LaunchConfiguration("device")
+  device_cmd = DeclareLaunchArgument(
+    "device", default_value="cuda:0", description="Device to use (GPU/CPU)"
+  )
 
-    device = LaunchConfiguration("device")
-    device_cmd = DeclareLaunchArgument(
-        "device",
-        default_value="cuda:0",
-        description="Device to use (GPU/CPU)")
+  enable = LaunchConfiguration("enable")
+  enable_cmd = DeclareLaunchArgument(
+    "enable", default_value="True", description="Whether to start YOLOv8 enabled"
+  )
 
-    enable = LaunchConfiguration("enable")
-    enable_cmd = DeclareLaunchArgument(
-        "enable",
-        default_value="True",
-        description="Whether to start YOLOv8 enabled")
+  threshold = LaunchConfiguration("threshold")
+  threshold_cmd = DeclareLaunchArgument(
+    "threshold",
+    default_value="0.5",
+    description="Minimum probability of a detection to be published",
+  )
 
-    threshold = LaunchConfiguration("threshold")
-    threshold_cmd = DeclareLaunchArgument(
-        "threshold",
-        default_value="0.5",
-        description="Minimum probability of a detection to be published")
+  input_image_topic = LaunchConfiguration("input_image_topic")
+  input_image_topic_cmd = DeclareLaunchArgument(
+    "input_image_topic",
+    default_value="/camera/rgb/image_raw",
+    description="Name of the input image topic",
+  )
 
-    input_image_topic = LaunchConfiguration("input_image_topic")
-    input_image_topic_cmd = DeclareLaunchArgument(
-        "input_image_topic",
-        default_value="/camera/rgb/image_raw",
-        description="Name of the input image topic")
+  image_reliability = LaunchConfiguration("image_reliability")
+  image_reliability_cmd = DeclareLaunchArgument(
+    "image_reliability",
+    default_value="2",
+    choices=["0", "1", "2"],
+    description="Specific reliability QoS of the input image topic (0=system default, 1=Reliable, 2=Best Effort)",
+  )
 
-    image_reliability = LaunchConfiguration("image_reliability")
-    image_reliability_cmd = DeclareLaunchArgument(
-        "image_reliability",
-        default_value="2",
-        choices=["0", "1", "2"],
-        description="Specific reliability QoS of the input image topic (0=system default, 1=Reliable, 2=Best Effort)")
+  namespace = LaunchConfiguration("namespace")
+  namespace_cmd = DeclareLaunchArgument(
+    "namespace", default_value="yolo", description="Namespace for the nodes"
+  )
 
-    namespace = LaunchConfiguration("namespace")
-    namespace_cmd = DeclareLaunchArgument(
-        "namespace",
-        default_value="yolo",
-        description="Namespace for the nodes")
+  make_unconfigured = ExecuteProcess(
+    cmd=[
+      [
+        FindExecutable(name="ros2"),
+        " lifecycle set ",
+        "/oak/yolo/yolov8_node ",
+        "deactivate",
+        '  && notify-send "From Launch lol"',
+      ]
+    ],
+    shell=True,
+  )
 
+  sleeper = ExecuteProcess(
+    cmd=[
+      [
+        "sleep 3",
+      ]
+    ],
+    shell=True,
+  )
 
-    make_unconfigured= ExecuteProcess(
-        cmd=[[
+  #
+  # NODES
+  #
+  detector_node_cmd = Node(
+    package="yolov8_ros",
+    executable="yolov8_node",
+    name="yolov8_node",
+    namespace=namespace,
+    parameters=[
+      {
+        "model": model,
+        "device": device,
+        "enable": enable,
+        "threshold": threshold,
+        "image_reliability": image_reliability,
+      }
+    ],
+    remappings=[("image_raw", input_image_topic)],
+  )
 
-            FindExecutable(name='ros2'),
-            ' lifecycle set ',
-            '/silo/yolo/yolov8_node ',
-            'deactivate', 
-            '  && notify-send "From Launch lol"' 
-        ]],
-        shell=True
+  tracking_node_cmd = Node(
+    package="yolov8_ros",
+    executable="tracking_node",
+    name="tracking_node",
+    namespace=namespace,
+    parameters=[{"tracker": tracker, "image_reliability": image_reliability}],
+    remappings=[("image_raw", input_image_topic)],
+  )
+
+  debug_node_cmd = Node(
+    package="yolov8_ros",
+    executable="debug_node",
+    name="debug_node",
+    namespace=namespace,
+    parameters=[{"image_reliability": image_reliability}],
+    remappings=[("image_raw", input_image_topic), ("detections", "tracking")],
+  )
+
+  ld = LaunchDescription()
+
+  ld.add_action(model_cmd)
+  ld.add_action(tracker_cmd)
+  ld.add_action(device_cmd)
+  ld.add_action(enable_cmd)
+  ld.add_action(threshold_cmd)
+  ld.add_action(input_image_topic_cmd)
+  ld.add_action(image_reliability_cmd)
+  ld.add_action(namespace_cmd)
+
+  ld.add_action(
+    RegisterEventHandler(
+      OnProcessStart(
+        target_action=detector_node_cmd,
+        on_start=[
+          sleeper,
+        ],
+      )
     )
+  )
 
-
-    sleeper = ExecuteProcess(
-        cmd=[[
-            'sleep 3',
-        ]],
-        shell=True
+  ld.add_action(
+    RegisterEventHandler(
+      OnProcessExit(
+        target_action=sleeper,
+        on_exit=[
+          make_unconfigured,
+        ],
+      )
     )
+  )
 
-    #
-    # NODES
-    #
-    detector_node_cmd = Node(
-        package="yolov8_ros",
-        executable="yolov8_node",
-        name="yolov8_node",
-        namespace=namespace,
-        parameters=[{
-            "model": model,
-            "device": device,
-            "enable": enable,
-            "threshold": threshold,
-            "image_reliability": image_reliability,
-        }],
-        remappings=[("image_raw", input_image_topic)]
-    )
+  ld.add_action(detector_node_cmd)
+  ld.add_action(tracking_node_cmd)
+  ld.add_action(debug_node_cmd)
 
-    tracking_node_cmd = Node(
-        package="yolov8_ros",
-        executable="tracking_node",
-        name="tracking_node",
-        namespace=namespace,
-        parameters=[{
-            "tracker": tracker,
-            "image_reliability": image_reliability
-        }],
-        remappings=[("image_raw", input_image_topic)]
-    )
-
-    debug_node_cmd = Node(
-        package="yolov8_ros",
-        executable="debug_node",
-        name="debug_node",
-        namespace=namespace,
-        parameters=[{"image_reliability": image_reliability}],
-        remappings=[
-            ("image_raw", input_image_topic),
-            ("detections", "tracking")
-        ]
-    )
-
-    ld = LaunchDescription()
-
-    ld.add_action(model_cmd)
-    ld.add_action(tracker_cmd)
-    ld.add_action(device_cmd)
-    ld.add_action(enable_cmd)
-    ld.add_action(threshold_cmd)
-    ld.add_action(input_image_topic_cmd)
-    ld.add_action(image_reliability_cmd)
-    ld.add_action(namespace_cmd)
-
-    ld.add_action(RegisterEventHandler(
-            OnProcessStart(
-                target_action=detector_node_cmd,
-                on_start=[
-                    sleeper,
-                    ]
-                )))
-
-    ld.add_action(RegisterEventHandler(
-            OnProcessExit(
-                target_action=sleeper,
-                on_exit=[
-                    make_unconfigured,
-                    ]
-                )))
-
-    ld.add_action(detector_node_cmd)
-    ld.add_action(tracking_node_cmd)
-    ld.add_action(debug_node_cmd)
-
-    return ld
+  return ld
