@@ -92,6 +92,12 @@ def generate_launch_description():
     "namespace", default_value="yolo", description="Namespace for the nodes"
   )
 
+  half_precision = LaunchConfiguration("half_precision")
+  half_precision_cmd = DeclareLaunchArgument("half_precision", default_value="False")
+
+  classes = LaunchConfiguration("classes")
+  classes_cmd = DeclareLaunchArgument("classes", default_value="[0,1,2]")
+
   make_unconfigured = ExecuteProcess(
     cmd=[
       [
@@ -129,6 +135,8 @@ def generate_launch_description():
         "enable": enable,
         "threshold": threshold,
         "image_reliability": image_reliability,
+        "half": half_precision,
+        "classes": classes,
       }
     ],
     remappings=[("image_raw", input_image_topic)],
@@ -162,6 +170,8 @@ def generate_launch_description():
   ld.add_action(input_image_topic_cmd)
   ld.add_action(image_reliability_cmd)
   ld.add_action(namespace_cmd)
+  ld.add_action(half_precision_cmd)
+  ld.add_action(classes_cmd)
 
   ld.add_action(
     RegisterEventHandler(

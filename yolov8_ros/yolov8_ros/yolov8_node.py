@@ -52,6 +52,8 @@ class Yolov8Node(LifecycleNode):
     self.declare_parameter("enable", True)
     self.declare_parameter("image_reliability", QoSReliabilityPolicy.BEST_EFFORT)
     self.declare_parameter("iou", 0.5)
+    self.declare_parameter("half", False)
+    self.declare_parameter("classes", [0, 1, 2])
 
     self.get_logger().info("Yolov8 Node created")
 
@@ -70,6 +72,10 @@ class Yolov8Node(LifecycleNode):
       self.get_parameter("image_reliability").get_parameter_value().integer_value
     )
     self.iou = self.get_parameter("iou").get_parameter_value().double_value
+    self.half = self.get_parameter("half").get_parameter_value().bool_value
+    self.classes = (
+      self.get_parameter("classes").get_parameter_value().integer_array_value
+    )
 
     self.image_qos_profile = QoSProfile(
       reliability=self.reliability,
@@ -222,6 +228,8 @@ class Yolov8Node(LifecycleNode):
         conf=self.threshold,
         device=self.device,
         iou=self.iou,
+        half=self.half,
+        classes=self.classes,
       )
       results: Results = results[0].cpu()
 
