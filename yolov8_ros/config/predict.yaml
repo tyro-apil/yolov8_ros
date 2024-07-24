@@ -1,0 +1,4 @@
+/**:
+  ros__parameters:
+    half: True
+    classes: [0,1,2]

@@ -13,6 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
+
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
   DeclareLaunchArgument,
@@ -42,6 +45,9 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
+  predict_config = os.path.join(
+    get_package_share_directory("yolov8_ros"), "config", "predict.yaml"
+  )
   #
   # ARGS
   #
@@ -92,12 +98,6 @@ def generate_launch_description():
     "namespace", default_value="yolo", description="Namespace for the nodes"
   )
 
-  half_precision = LaunchConfiguration("half_precision")
-  half_precision_cmd = DeclareLaunchArgument("half_precision", default_value="False")
-
-  classes = LaunchConfiguration("classes")
-  classes_cmd = DeclareLaunchArgument("classes", default_value="[0,1,2]")
-
   make_unconfigured = ExecuteProcess(
     cmd=[
       [
@@ -135,9 +135,8 @@ def generate_launch_description():
         "enable": enable,
         "threshold": threshold,
         "image_reliability": image_reliability,
-        "half": half_precision,
-        "classes": classes,
-      }
+      },
+      predict_config,
     ],
     remappings=[("image_raw", input_image_topic)],
   )
@@ -170,8 +169,6 @@ def generate_launch_description():
   ld.add_action(input_image_topic_cmd)
   ld.add_action(image_reliability_cmd)
   ld.add_action(namespace_cmd)
-  ld.add_action(half_precision_cmd)
-  ld.add_action(classes_cmd)
 
   ld.add_action(
     RegisterEventHandler(

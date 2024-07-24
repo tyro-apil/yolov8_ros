@@ -52,7 +52,7 @@ class Yolov8Node(LifecycleNode):
     self.declare_parameter("enable", True)
     self.declare_parameter("image_reliability", QoSReliabilityPolicy.BEST_EFFORT)
     self.declare_parameter("iou", 0.5)
-    self.declare_parameter("half", False)
+    self.declare_parameter("half", True)
     self.declare_parameter("classes", [0, 1, 2])
 
     self.get_logger().info("Yolov8 Node created")
