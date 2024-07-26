@@ -92,6 +92,9 @@ def generate_launch_description():
     "namespace", default_value="yolo", description="Namespace for the nodes"
   )
 
+  iou = LaunchConfiguration("iou")
+  iou_cmd = DeclareLaunchArgument("iou", default_value="0.3")
+
   make_unconfigured = ExecuteProcess(
     cmd=[
       [
@@ -129,6 +132,7 @@ def generate_launch_description():
         "enable": enable,
         "threshold": threshold,
         "image_reliability": image_reliability,
+        "iou": iou,
       }
     ],
     remappings=[("image_raw", input_image_topic)],
@@ -162,6 +166,7 @@ def generate_launch_description():
   ld.add_action(input_image_topic_cmd)
   ld.add_action(image_reliability_cmd)
   ld.add_action(namespace_cmd)
+  ld.add_action(iou_cmd)
 
   ld.add_action(
     RegisterEventHandler(
